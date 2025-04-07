@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Yusuf To Do List</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f2f5;
+      padding: 2rem;
+    }
+    h1 {
+      color: #333;
+    }
+    .project {
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    input, button, select {
+      padding: 0.5rem;
+      margin-right: 0.5rem;
+      font-size: 1rem;
+    }
+    .task {
+      margin-left: 1rem;
+      padding-left: 1rem;
+      border-left: 2px solid #ccc;
+      margin-top: 0.5rem;
+    }
+    .delete-project-btn {
+      background: #f44336;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .status-select {
+      margin-left: 1rem;
+      padding: 0.25rem;
+    }
+    /* Color coding for task status */
+    .status-todo {
+      background-color: #f9d42e; /* Yellow for To Do */
+    }
+    .status-in-progress {
+      background-color: #2196F3; /* Blue for In Progress */
+      color: white;
+    }
+    .status-done {
+      background-color: #4CAF50; /* Green for Done */
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>🗂️ Yusuf To Do List</h1>
+
+  <input type="text" id="projectInput" placeholder="New project name" />
+  <button onclick="addProject()">Add Project</button>
+
+  <div id="projectsContainer"></div>
+
+  <script>
+    // Load projects from localStorage on page load
+    let projects = JSON.parse(localStorage.getItem('projects')) || [];
+
+    // Add a new project
+    function addProject() {
+      const input = document.getElementById("projectInput");
+      const name = input.value.trim();
+      if (!name) return;
+
+      const newProj = { name, tasks: [] };
+      projects.push(newProj);
+      input.value = "";
+      saveProjects();
+      renderProjects();
+    }
+
+    // Add a task to a project
+    function addTask(index) {
+      const taskInput = document.getElementById(`taskInput-${index}`);
+      const task = taskInput.value.trim();
+      if (!task) return;
+
+      const newTask = { description: task, status: 'To Do' };
+      projects[index].tasks.push(newTask);
+      taskInput.value = "";
+      saveProjects();
+      renderProjects();
+    }
+
+    // Toggle task completion by checking/unchecking the checkbox
+    function toggleTaskStatus(projIndex, taskIndex) {
+      const task = projects[projIndex].tasks[taskIndex];
+      if (task.status === 'To Do') {
+        task.status = 'Done';
+      } else {
+        projects[projIndex].tasks.splice(taskIndex, 1);
+      }
+      saveProjects();
+      renderProjects();
+    }
+
+    // Delete a project
+    function deleteProject(index) {
+      projects.splice(index, 1);
+      saveProjects();
+      renderProjects();
+    }
+
+    // Save projects to localStorage
+    function saveProjects() {
+      localStorage.setItem('projects', JSON.stringify(projects));
+    }
+
+    // Render projects and tasks
+    function renderProjects() {
+      const container = document.getElementById("projectsContainer");
+      container.innerHTML = "";
+
+      projects.forEach((proj, projIndex) => {
+        const projDiv = document.createElement("div");
+        projDiv.className = "project";
+
+        projDiv.innerHTML = `
+          <div>
+            <h2>${proj.name}</h2>
+            <input type="text" id="taskInput-${projIndex}" placeholder="New task..." onkeydown="handleTaskKeydown(event, ${projIndex})" />
+            <button onclick="addTask(${projIndex})">Add Task</button>
+          </div>
+          <div>
+            ${proj.tasks.map((task, taskIndex) => `
+              <div class="task ${getStatusClass(task.status)}">
+                <input type="checkbox" ${task.status === 'Done' ? 'checked' : ''} onclick="toggleTaskStatus(${projIndex}, ${taskIndex})" />
+                📌 ${task.description}
+              </div>
+            `).join("")}
+          </div>
+          <button class="delete-project-btn" onclick="deleteProject(${projIndex})">Delete Project</button>
+        `;
+
+        container.appendChild(projDiv);
+      });
+    }
+
+    // Get class based on task status for color coding
+    function getStatusClass(status) {
+      if (status === 'To Do') return 'status-todo';
+      if (status === 'In Progress') return 'status-in-progress';
+      if (status === 'Done') return 'status-done';
+      return '';
+    }
+
+    // Handle pressing Enter to add a task
+    function handleTaskKeydown(event, index) {
+      if (event.key === 'Enter') {
+        addTask(index);
+      }
+    }
+
+    // Initial render
+    renderProjects();
+  </script>
+</body>
+</html>
